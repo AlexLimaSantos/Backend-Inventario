@@ -1,23 +1,22 @@
 const {getConnection, oracledb} = require('../database/oracleConnectors')
 
+const corteCongelado = 63595;
+const corteResfriado = 58365;
+
 /*Realiza as partições do Boi*/
-async function particionarSuino(inventario, resfriado, congelado) {
-    if(resfriado > 0 && congelado){
-        return message = await particionarCongelado(inventario, congelado) + " e " + await particionarResfriado(inventario, resfriado);
-
-    } else if(resfriado > 0){
-        return message = await particionarResfriado(inventario, resfriado);
-
-    } else if (congelado > 0){
-        return message = await particionarCongelado(inventario, congelado);
-
-    } 
+async function particionarSuino(inventario, corte, qt) {
+    if (corte = corteCongelado) {
+        particionarCongelado(inventario, qt);
+    } else if (corte = corteResfriado) {
+        particionarResfriado(inventario, qt);
+    } else {
+        return "Corte não encontrado!"
+    }
 }
 
 
 /*Partição do Suino Congelado*/
 async function particionarCongelado(inventario, qt) {
-    const prodCongelado = 63595;
 
     try {
         conn = await getConnection();
@@ -34,7 +33,7 @@ async function particionarCongelado(inventario, qt) {
                     ORDER BY C.CODPRODMP
         `;
 
-        result = await conn.execute(sql, [qt, prodCongelado], {outFormat: oracledb.OUT_FORMAT_OBJECT});
+        result = await conn.execute(sql, [qt, corteCongelado], {outFormat: oracledb.OUT_FORMAT_OBJECT});
 
         /*Aplicando valores das partições no inventário*/
         for(const row of result.rows) {
@@ -51,7 +50,8 @@ async function particionarCongelado(inventario, qt) {
             await conn.commit();
         }
 
-        return "Suino Congelado Particionado";
+        console.log("Valores incluidos:", result);
+        return "Suino Congelado Particionado!";
 
     } catch(err) {
         console.log(err);
@@ -65,7 +65,6 @@ async function particionarCongelado(inventario, qt) {
 
 /*Partição do Suino Resfriado*/
 async function particionarResfriado(inventario, qt) {
-    const prodResfriado = 58365;
 
     try {
         conn = await getConnection();
@@ -82,7 +81,7 @@ async function particionarResfriado(inventario, qt) {
                     ORDER BY C.CODPRODMP
         `;
 
-        result = await conn.execute(sql, [qt, prodResfriado], {outFormat: oracledb.OUT_FORMAT_OBJECT});
+        result = await conn.execute(sql, [qt, corteResfriado], {outFormat: oracledb.OUT_FORMAT_OBJECT});
 
         /*Aplicando valores das partições no inventário*/
         for(const row of result.rows) {
@@ -99,7 +98,8 @@ async function particionarResfriado(inventario, qt) {
             await conn.commit();
         }
 
-        return "Suino Resfriado Particionado";
+        console.log("Valores incluidos:", result);
+        return "Suino Resfriado Particionado!";
     } catch(err) {
         console.log(err);
     } finally {

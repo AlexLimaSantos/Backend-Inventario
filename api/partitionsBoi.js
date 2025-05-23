@@ -1,34 +1,25 @@
 const {getConnection, oracledb} = require('../database/oracleConnectors')
 
+const corteTraseiro = 14258;
+const corteDianteiro = 14259;
+const cortePontaAgulha = 14264
+
 /*Realiza as partições do Boi*/
-async function particionarBoi(inventario, traseiro, dianteiro, pontaAgulha) {
-    if(traseiro > 0 && dianteiro > 0 && pontaAgulha > 0){
-        return message = await particionarTraseiro(inventario, traseiro) + ", " + await particionarDianteiro(inventario, dianteiro) + " e " +  await particionarPontaAgulha(inventario, pontaAgulha);
-
-    } else if(traseiro > 0 && dianteiro > 0){
-        return message = await particionarTraseiro(inventario, traseiro) + " e " + await particionarDianteiro(inventario, dianteiro); 
-
-    } else if (traseiro > 0 && pontaAgulha > 0){
-        return message = await particionarTraseiro(inventario, traseiro) + " e " + await particionarPontaAgulha(inventario, pontaAgulha);
-
-    } else if (dianteiro > 0 && pontaAgulha > 0){
-        return message = await particionarDianteiro(inventario, dianteiro)  + " e " + await particionarPontaAgulha(inventario, pontaAgulha);
-
-    } else if (traseiro > 0){
-       return message = await particionarTraseiro(inventario, traseiro);
-            
-    } else if (dianteiro > 0){
-        return message  = await particionarDianteiro(inventario, dianteiro);
-
-    } else if (pontaAgulha > 0){
-        return message = await particionarPontaAgulha(inventario, pontaAgulha);
+async function particionarBoi(inventario, corte, qt) {
+    if (corte = corteTraseiro){
+        particionarTraseiro(inventario, qt);
+    } else if (corte = corteDianteiro) {
+        particionarDianteiro(inventario, qt);
+    } else if (corte = cortePontaAgulha) {
+        particionarPontaAgulha(inventario, qt);
+    } else {
+        return "Corte não encontrado!"
     }
 }
 
 
 /*Partição do Traseiro*/
 async function particionarTraseiro(inventario, qt) {
-    const prodTraseiro = 14258;
 
     try {
         conn = await getConnection();
@@ -45,7 +36,7 @@ async function particionarTraseiro(inventario, qt) {
                     ORDER BY C.CODPRODMP
         `;
 
-        result = await conn.execute(sql, [qt, prodTraseiro], {outFormat: oracledb.OUT_FORMAT_OBJECT});
+        result = await conn.execute(sql, [qt, corteTraseiro], {outFormat: oracledb.OUT_FORMAT_OBJECT});
 
         /*Aplicando valores das partições no inventário*/
         for(const row of result.rows) {
@@ -62,6 +53,7 @@ async function particionarTraseiro(inventario, qt) {
             await conn.commit();
         }
 
+        console.log("Valores incluidos:", result);
         return "Traseiro Particionado";
 
     } catch(err) {
@@ -76,7 +68,6 @@ async function particionarTraseiro(inventario, qt) {
 
 /*Partição do Dianteiro*/
 async function particionarDianteiro(inventario, qt) {
-    const prodDianteiro = 14259;
 
     try {
         conn = await getConnection();
@@ -93,7 +84,7 @@ async function particionarDianteiro(inventario, qt) {
                     ORDER BY C.CODPRODMP
         `;
 
-        result = await conn.execute(sql, [qt, prodDianteiro], {outFormat: oracledb.OUT_FORMAT_OBJECT});
+        result = await conn.execute(sql, [qt, corteDianteiro], {outFormat: oracledb.OUT_FORMAT_OBJECT});
 
         /*Aplicando valores das partições no inventário*/
         for(const row of result.rows) {
@@ -110,6 +101,7 @@ async function particionarDianteiro(inventario, qt) {
             await conn.commit();
         }
 
+        console.log("Valores incluidos:", result);
         return "Dianteiro Particionado";
     } catch(err) {
         console.log(err);
@@ -121,9 +113,8 @@ async function particionarDianteiro(inventario, qt) {
 }
 
 
-/*Partição da POnta de Agulha*/
+/*Partição da Ponta de Agulha*/
 async function particionarPontaAgulha(inventario, qt) {
-    const prodPontaAgulha = 14264;
     
     try {
         conn = await getConnection();
@@ -140,7 +131,7 @@ async function particionarPontaAgulha(inventario, qt) {
                     ORDER BY C.CODPRODMP
         `;
 
-        result = await conn.execute(sql, [qt, prodPontaAgulha], {outFormat: oracledb.OUT_FORMAT_OBJECT});
+        result = await conn.execute(sql, [qt, cortePontaAgulha], {outFormat: oracledb.OUT_FORMAT_OBJECT});
 
         /*Aplicando valores das partições no inventário*/
         for(const row of result.rows) {
@@ -157,6 +148,7 @@ async function particionarPontaAgulha(inventario, qt) {
             await conn.commit();
         }
 
+        console.log("Valores incluidos:", result);
         return "Ponta de Agulha Particionado";
     } catch(err) {
         console.log(err);

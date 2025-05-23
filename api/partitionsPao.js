@@ -1,23 +1,22 @@
 const {getConnection, oracledb} = require('../database/oracleConnectors')
 
+const tipoTradicional = 2823;
+const tipoArtesanal = 62288;
+
 /*Realiza as partições do Boi*/
-async function particionarPao(inventario, tradicional, artesanal) {
-    if(tradicional > 0 && artesanal){
-        return message = await particionarTradicional(inventario, tradicional) + " e " + await particionarArtesanal(inventario, artesanal);
-
-    } else if(tradicional > 0){
-        return message = await particionarTradicional(inventario, tradicional);
-
-    } else if (artesanal > 0){
-        return message = await particionarArtesanal(inventario, artesanal);
-
-    } 
+async function particionarPao(inventario, tipo, qt) {
+    if (tipo = tipoTradicional) {
+        produzirTradicional(inventario, qt);
+    } else if (tipo = tipoArtesanal) {
+        produzirArtesanal(inventario, qt);
+    } else {
+        return "Tipo de produção não encontrada!";
+    }
 }
 
 
 /*Partição do Suino Congelado*/
-async function particionarTradicional(inventario, qt) {
-    const prodTradicional = 2823;
+async function produzirTradicional(inventario, qt) {
 
     try {
         conn = await getConnection();
@@ -51,6 +50,7 @@ async function particionarTradicional(inventario, qt) {
             await conn.commit();
         }
 
+        console.log("Valores incluidos:", result);
         return "Pão Tradicional Particionado";
 
     } catch(err) {
@@ -64,8 +64,7 @@ async function particionarTradicional(inventario, qt) {
 
 
 /*Partição do Suino Resfriado*/
-async function particionarArtesanal(inventario, qt) {
-    const prodArtesanal = 62288;
+async function produzirArtesanal(inventario, qt) {
 
     try {
         conn = await getConnection();
@@ -96,6 +95,7 @@ async function particionarArtesanal(inventario, qt) {
                 NUMINVENT: inventario
             });
 
+            console.log("Valores incluidos:", result);
             await conn.commit();
         }
 

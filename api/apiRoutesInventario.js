@@ -7,17 +7,18 @@ const {particionarSuino} = require('./partitionsSuino');
 const {particionarPao} = require('./partitionsPao');
 
 
-/*Buscar Inventário*/
+/*Buscar Inventários Abertos*/
 router.get('/inventarios', async(req, res) => {
     let conn;
 
     try {
         conn = await getConnection();
 
-        const select = 'SELECT DISTINCT NUMINVENT FROM PCINVENTROT WHERE DATA > TRUNC(SYSDATE)-360';
+        const select = 'SELECT DISTINCT NUMINVENT FROM PCINVENTROT WHERE DTATUALIZACAO IS NULL AND NUMINVENT IS NOT NULL';
         const result = await conn.execute(select, [], {outFormat: oracledb.OUT_FORMAT_OBJECT});
 
         res.status(200).json(result.rows);
+        console.log("Inventários Abertos: ", result.rows);
     } catch (err) {
         console.log(err);
         res.status(500).json({error: err.message})
@@ -30,8 +31,9 @@ router.get('/inventarios', async(req, res) => {
 
 
 /*Atualizar Inventários*/
-router.post('/inventarios', async (req, res) => {
+router.post('/atualizar-inventarios', async (req, res) => {
     const {oneInvent, inventario1, inventario2} = req.body;
+    console.log(req.body);
 
     /*Valida se é somente um inventário*/
     try {
@@ -58,7 +60,8 @@ router.post('/inventarios', async (req, res) => {
                 WHERE pcest.codfilial = 1
                 AND pcest.codprod = pcinventrot.codprod
                 AND pcest.QTESTGER <> pcinventrot.QTESTGER
-                AND pcinventrot.numinvent BETWEEN :1 AND :2
+                --AND DTATUALIZACAO IS NULL 
+                AND pcinventrot.numinvent BETWEEN :ivent1 AND :invent2
             `;
 
         if(oneInvent){
@@ -66,6 +69,8 @@ router.post('/inventarios', async (req, res) => {
         } else {
             result = await conn.execute(query, [inventario1, inventario2], { outFormat: oracledb.OUT_FORMAT_OBJECT });
         }
+
+        console.log("\nQuantidades a serem Atualizadas:", result.rows);
 
         /*Update das Quantidades na PCINVENTROT*/
         for(const row of result.rows) {
@@ -86,6 +91,7 @@ router.post('/inventarios', async (req, res) => {
         }
         
         res.status(200).json({ message: "Updates successful", produtos_atualizados: result.rows.length});
+        console.log("Produtos Atualizados:" ,result.rows.length);
        
     } catch (err) {
         console.log(err);
@@ -99,13 +105,15 @@ router.post('/inventarios', async (req, res) => {
 
 
 /*Particionar Boi*/
-router.post('/inventarios/particionarBoi', async (req, res) => {
-    const {numinvent, traseiro, dianteiro, pontaAgulha} = req.body;
+router.post('/inventarios/particionar-boi', async (req, res) => {
+    const {numinvent, corte, qtd} = req.body;
+    console.log(req.body);
 
     /*Valida o Número do Inventário e as quantidades digitadas*/
     try {
-        existOrError(numinvent, "Digite o número do Inventário!");
-        valuesBoi(traseiro, dianteiro, pontaAgulha, "Digite as quantidades das partições!");
+        existOrError(numinvent, "Digite o número do inventário!");
+        existOrError(corte, "Informe o corte a ser realizado!");
+        existOrError(qtd, "Digite a quantidade da partição!");
     } catch(msg) {
         console.log(msg);
         return res.status(400).json(msg);
@@ -115,8 +123,9 @@ router.post('/inventarios/particionarBoi', async (req, res) => {
 
     /*Filtra as partições a ser atualizadas e atualiza as quantidades no inventário*/
     try {
-        result = await particionarBoi(numinvent, traseiro, dianteiro, pontaAgulha);
+        result = await particionarBoi(numinvent, corte, qtd);
         return res.status(200).json(result);
+        console.log(result);
     } catch(err) {
         console.log(err);
         res.status(500).json(err);
@@ -129,13 +138,15 @@ router.post('/inventarios/particionarBoi', async (req, res) => {
 
 
 /*Particionar Suino*/
-router.post('/inventarios/particionarSuino', async (req, res) => {
-    const {numinvent, congelado, resfriado} = req.body;
+router.post('/inventarios/particionar-suino', async (req, res) => {
+    const {numinvent, corte, qtd} = req.body;
+    console.log(req.body);
 
     /*Valida o Número do Inventário e as quantidades digitadas*/
     try {
         existOrError(numinvent, "Digite o número do inventário");
-        valuesSuinoAndPao(congelado, resfriado, "Digite as quantidades das partições!");
+        existOrError(corte, "Informe o corte a ser realizado!");
+        existOrError(qtd, "Digite a quantidade da partição!");
     } catch(msg) {
         console.log(msg);
         return res.status(400).json(msg);
@@ -145,8 +156,9 @@ router.post('/inventarios/particionarSuino', async (req, res) => {
 
     /*Filtra as partições a ser atualizadas e atualiza as quantidades no inventário*/
     try {
-        result = await particionarSuino(inventario, resfriado, congelado);
+        result = await particionarSuino(numinvent, corte, qtd);
         return res.status(200).json(result);
+        console.log(result);
     } catch(err) {
         console.log(err);
         return res.status(500).json(result);
@@ -159,12 +171,14 @@ router.post('/inventarios/particionarSuino', async (req, res) => {
 
 
 /*Particionar Pão*/
-router.post('/inventarios/particionarPao' , async (req, res) => {
-    const {numinvent, tradicional, artesanal} = req.body;
+router.post('/inventarios/particionar-pao' , async (req, res) => {
+    const {numinvent, tipo, qtd} = req.body;
+    console.log(req.body);
 
     try {
         existOrError(numinvent, "Digite o número do inventário!");
-        valuesSuinoAndPao(tradicional, artesanal, "Digite os valores das partições!");
+        existOrError(tipo, "Informe o tipo do pão!");
+        existOrError(qtd, "Digite a quantidade da produção!");
     } catch(msg) {
         console.log(msg);
         res.status(400).json(msg);
@@ -173,8 +187,9 @@ router.post('/inventarios/particionarPao' , async (req, res) => {
     let conn;
 
     try {
-        result = await particionarPao(numinvent, tradicional, artesanal);
+        result = await particionarPao(numinvent, tipo, qtd);
         return res.status(200).json(result);
+        console.log(result);
     } catch(err) {
         console.log(err);
         res.status(500).json(err);
