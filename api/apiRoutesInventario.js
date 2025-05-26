@@ -1,7 +1,7 @@
 const express = require('express');
 const  router = express.Router();
 const {getConnection, oracledb} = require('../database/oracleConnectors');
-const {existOrError, valuesBoi, valuesSuinoAndPao} = require('./validations');
+const {existOrError} = require('./validations');
 const {particionarBoi} = require('./partitionsBoi');
 const {particionarSuino} = require('./partitionsSuino');
 const {particionarPao} = require('./partitionsPao');
@@ -31,7 +31,7 @@ router.get('/inventarios', async(req, res) => {
 
 
 /*Atualizar Inventários*/
-router.post('/atualizar-inventarios', async (req, res) => {
+router.post('/inventarios/atualizar', async (req, res) => {
     const {oneInvent, inventario1, inventario2} = req.body;
     console.log(req.body);
 
@@ -171,7 +171,7 @@ router.post('/inventarios/particionar-suino', async (req, res) => {
 
 
 /*Particionar Pão*/
-router.post('/inventarios/particionar-pao' , async (req, res) => {
+router.post('/inventarios/produzir-pao' , async (req, res) => {
     const {numinvent, tipo, qtd} = req.body;
     console.log(req.body);
 
