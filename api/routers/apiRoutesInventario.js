@@ -1,10 +1,11 @@
 const express = require('express');
 const  router = express.Router();
-const {getConnection, oracledb} = require('../database/oracleConnectors');
-const {existOrError} = require('./validations');
-const {particionarBoi} = require('./partitionsBoi');
-const {particionarSuino} = require('./partitionsSuino');
-const {particionarPao} = require('./partitionsPao');
+const {getConnection, oracledb} = require('../../database/oracleConnectors');
+const {existOrError} = require('../validations');
+const {particionarBoi} = require('../controller/partitionsBoiController');
+const {particionarSuino} = require('../controller/partitionsSuinoController');
+const {particionarPao} = require('../controller/partitionsPaoController');
+const {upload, processSheet} = require('../controller/sheetController');
 
 
 /*Buscar Inventários Abertos*/
@@ -118,8 +119,6 @@ router.post('/inventarios/particionar-boi', async (req, res) => {
         console.log(msg);
         return res.status(400).json(msg);
     }
-    
-    let conn;
 
     /*Filtra as partições a ser atualizadas e atualiza as quantidades no inventário*/
     try {
@@ -129,10 +128,6 @@ router.post('/inventarios/particionar-boi', async (req, res) => {
     } catch(err) {
         console.log(err);
         res.status(500).json(err);
-    } finally {
-        if(conn) {
-            await conn.close();
-        }
     }
 });
 
@@ -152,8 +147,6 @@ router.post('/inventarios/particionar-suino', async (req, res) => {
         return res.status(400).json(msg);
     }
 
-    let conn;
-
     /*Filtra as partições a ser atualizadas e atualiza as quantidades no inventário*/
     try {
         result = await particionarSuino(numinvent, corte, qtd);
@@ -162,10 +155,6 @@ router.post('/inventarios/particionar-suino', async (req, res) => {
     } catch(err) {
         console.log(err);
         return res.status(500).json(result);
-    } finally {
-        if (conn) {
-            await conn.close();
-        }
     }
 });
 
@@ -184,8 +173,6 @@ router.post('/inventarios/produzir-pao' , async (req, res) => {
         res.status(400).json(msg);
     }
 
-    let conn;
-
     try {
         result = await particionarPao(numinvent, tipo, qtd);
         return res.status(200).json(result);
@@ -193,11 +180,27 @@ router.post('/inventarios/produzir-pao' , async (req, res) => {
     } catch(err) {
         console.log(err);
         res.status(500).json(err);
-    } finally {
-        if(conn){
-            await conn.close();
-        }
+    } 
+});
+
+
+/*Planilha Kaizen*/
+router.post('/inventarios/planilha', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('Arquivo não enviado.');
+        console.log("Arquivo não enviado.")
     }
+
+
+    try {
+        const file = req.file.path;
+        console.log(file);
+        result = await processSheet(file);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.log(err);
+        res.status(400).json(err);
+    } 
 });
 
 

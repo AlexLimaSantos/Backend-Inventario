@@ -1,4 +1,4 @@
-const {getConnection, oracledb} = require('../database/oracleConnectors')
+const {getConnection, oracledb} = require('../../database/oracleConnectors')
 
 const corteCongelado = 63595;
 const corteResfriado = 58365;

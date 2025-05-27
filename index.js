@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const apiRoutesInventario = require('./api/apiRoutesInventario');
+const apiRoutesInventario = require('./api/routers/apiRoutesInventario');
 
 const app = express();
 
