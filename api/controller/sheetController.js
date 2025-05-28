@@ -1,9 +1,10 @@
 const XLSX = require('xlsx');
 const fs = require('fs');
 const multer = require('multer');
+const {extensionError} = require('../validations')
 
 
-/*Salva planilha na pasta */
+/*Salva planilha na pasta*/
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, './api/uploads-kaizen/');
@@ -12,7 +13,6 @@ const storage = multer.diskStorage({
         const ext = file.originalname.split('.')[1];
         const filename = Date.now() + "-" + file + '.' + ext;
         cb(null, filename);
-        console.log(filename);
     }
 });
 
@@ -33,6 +33,7 @@ async function processSheet(file){
 
         return 'Planilha processada com sucesso!';
     } catch (error){
+        fs.unlinkSync(file);
         console.error('Erro ao processar planilha:', error);
         return 'Erro ao processar a planilha.';
     }

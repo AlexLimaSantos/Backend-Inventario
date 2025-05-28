@@ -1,3 +1,6 @@
+const fs = require('fs');
+
+
 /*Valida as entradas*/
 function existOrError(value, msg){
     if(!value) throw msg;
@@ -5,4 +8,12 @@ function existOrError(value, msg){
     if(typeof value === 'string' && !value.trim()) throw msg;
 };
 
-module.exports = {existOrError};
+function extensionError(value){
+    if(value.originalname.split('.')[1] != 'xlsx') {
+        return true;
+    } else if(value.originalname.split('.')[1] != 'xls') {
+        return true;
+    }
+};
+
+module.exports = {existOrError, extensionError};

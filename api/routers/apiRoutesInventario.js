@@ -1,11 +1,12 @@
 const express = require('express');
 const  router = express.Router();
 const {getConnection, oracledb} = require('../../database/oracleConnectors');
-const {existOrError} = require('../validations');
+const {existOrError, extensionError} = require('../validations');
 const {particionarBoi} = require('../controller/partitionsBoiController');
 const {particionarSuino} = require('../controller/partitionsSuinoController');
 const {particionarPao} = require('../controller/partitionsPaoController');
 const {upload, processSheet} = require('../controller/sheetController');
+const fs = require('fs');
 
 
 /*Buscar Inventários Abertos*/
@@ -186,15 +187,17 @@ router.post('/inventarios/produzir-pao' , async (req, res) => {
 
 /*Planilha Kaizen*/
 router.post('/inventarios/planilha', upload.single('file'), async (req, res) => {
+    const file = req.file.path;
+
     if (!req.file) {
-        return res.status(400).send('Arquivo não enviado.');
-        console.log("Arquivo não enviado.")
+        console.log('Arquivo não enviado.');
+        return res.status(400).json('Arquivo não enviado.');
+    } else if(extensionError(req.file)) {
+        fs.unlinkSync(file);
+        return res.status(400).json('Extensão do arquivo inválida, envie em XLSX ou XLS.');
     }
 
-
     try {
-        const file = req.file.path;
-        console.log(file);
         result = await processSheet(file);
         return res.status(200).json(result);
     } catch (err) {
