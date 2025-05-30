@@ -9,9 +9,11 @@ function existOrError(value, msg){
 };
 
 function extensionError(value){
-    if(value.originalname.split('.')[1] != 'xlsx') {
-        return true;
-    } else if(value.originalname.split('.')[1] != 'xls') {
+    if(value.originalname.split('.')[1] === 'xlsx') {
+        return false;
+    } else if(value.originalname.split('.')[1] === 'xls') {
+        return false;
+    } else {
         return true;
     }
 };

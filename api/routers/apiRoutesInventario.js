@@ -121,15 +121,17 @@ router.post('/inventarios/particionar-boi', async (req, res) => {
         return res.status(400).json(msg);
     }
 
+    return res.status(200).json(req.body);
+
     /*Filtra as partições a ser atualizadas e atualiza as quantidades no inventário*/
-    try {
+    /* try {
         result = await particionarBoi(numinvent, corte, qtd);
-        return res.status(200).json(result);
         console.log(result);
+        return res.status(200).json(result);
     } catch(err) {
         console.log(err);
         res.status(500).json(err);
-    }
+    } */
 });
 
 
@@ -187,17 +189,17 @@ router.post('/inventarios/produzir-pao' , async (req, res) => {
 
 /*Planilha Kaizen*/
 router.post('/inventarios/planilha', upload.single('file'), async (req, res) => {
-    const file = req.file.path;
 
     if (!req.file) {
         console.log('Arquivo não enviado.');
         return res.status(400).json('Arquivo não enviado.');
     } else if(extensionError(req.file)) {
-        fs.unlinkSync(file);
+        fs.unlinkSync(req.file.path);
         return res.status(400).json('Extensão do arquivo inválida, envie em XLSX ou XLS.');
     }
 
     try {
+        const file = req.file.path;
         result = await processSheet(file);
         return res.status(200).json(result);
     } catch (err) {
